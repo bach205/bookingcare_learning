@@ -38,7 +38,16 @@ const userCRUD = async (req, res) => {
         user,
     })
 }
+
+const addNewUser = async (req, res) => {
+    let newUser = req.body;
+    let status = await userService.createNewUser(newUser);
+    res.status(200).json({
+        status,
+    })
+}
 module.exports = {
     handleLogin: handleLogin,
     userCRUD: userCRUD,
+    addNewUser: addNewUser,
 }

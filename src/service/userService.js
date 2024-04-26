@@ -57,10 +57,53 @@ const getAllUser = async (userId) => {
     }
 
 }
-
-
+let hashUserPassword = (password) => {
+    return new Promise((resolve, reject) => {
+        try {
+            let hashPassword = bcrypt.hashSync(password, salt);
+            resolve(hashPassword);
+        } catch (erorr) {
+            reject(erorr);
+        }
+    })
+}
+const createNewUser = async (data) => {
+    let check = await checkEmail(data.email);
+    let hashedPassword = hashUserPassword(data.password);
+    if (check) {
+        return {
+            errCode: 1,
+            message: 'your email is existed',
+        }
+    } else {
+        newUser = await db.User.create({
+            email: data.email,
+            password: hashedPassword,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            address: data.address,
+        })
+        return {
+            errCode: 0,
+            message: 'your account is create succesfully',
+        }
+    }
+}
+const checkEmail = async (email) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let check = await db.User.findOne({
+                where: { email } //{email: email}
+            })
+            resolve(check);
+        } catch (error) {
+            reject(error);
+        }
+    })
+}
 
 module.exports = {
     checkUserRequest: checkUserRequest,
     getAllUser: getAllUser,
+    createNewUser: createNewUser,
 }
