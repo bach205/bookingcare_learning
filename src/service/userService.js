@@ -1,6 +1,6 @@
 import db from '../models/index';
 import bcrypt from "bcryptjs";
-
+let salt = bcrypt.genSaltSync(10);
 
 const checkUserRequest = async (email, password) => {
     let userData = {};
@@ -69,14 +69,15 @@ let hashUserPassword = (password) => {
 }
 const createNewUser = async (data) => {
     let check = await checkEmail(data.email);
-    let hashedPassword = hashUserPassword(data.password);
+
     if (check) {
         return {
             errCode: 1,
             message: 'your email is existed',
         }
     } else {
-        newUser = await db.User.create({
+        let hashedPassword = await hashUserPassword(data.password);
+        await db.User.create({
             email: data.email,
             password: hashedPassword,
             firstName: data.firstName,
@@ -102,8 +103,61 @@ const checkEmail = async (email) => {
     })
 }
 
+const handleDeleteUser = async (id) => {
+    try {
+        let check = await db.User.destroy({
+            where: { id },
+        })
+        if (check) return {
+            errCode: 0,
+            message: 'delete successfully',
+        }; else return {
+            errCode: 1,
+            message: 'user have deleted already'
+
+        }
+    } catch (error) {
+        return {
+            errCode: 2,
+            message: error.toString(),
+        };
+    }
+}
+
+const handlePutUser = async (data) => {
+    let user = await db.User.findOne({
+        where: { id: data.id },
+    })
+    let check = await checkEmail(data.email);
+    if (check) {
+        return {
+            errCode: 1,
+            message: 'your email is existed',
+        }
+    } else {
+        if (user) {
+            user.email = data.email;
+            user.firstName = data.firstName;
+            user.lastName = data.lastName;
+            user.address = data.address;
+            await user.save();
+            return {
+                errCode: 0,
+                message: 'update successfully',
+            }
+        }
+        else return {
+            errCode: 1,
+            message: 'your user is not existed',
+        }
+    }
+
+
+}
 module.exports = {
     checkUserRequest: checkUserRequest,
     getAllUser: getAllUser,
     createNewUser: createNewUser,
+    handleDeleteUser: handleDeleteUser,
+    handlePutUser: handlePutUser,
 }
